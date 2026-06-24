@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-electron/
+dist-renderer/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.selftest/
