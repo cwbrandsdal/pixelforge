@@ -55,9 +55,15 @@ async function createWindow(): Promise<void> {
     minWidth: 1060,
     minHeight: 720,
     title: "PixelForge",
-    backgroundColor: "#101214",
+    backgroundColor: "#07192c",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "../assets/icon.png"),
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: "#07192c",
+      symbolColor: "#eaf5f7",
+      height: 36
+    },
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,

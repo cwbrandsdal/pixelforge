@@ -31,6 +31,8 @@ type LogEntry = {
   stream: "info" | "stdout" | "stderr" | "error";
 };
 
+type AppView = "forge" | "settings";
+
 const emptySettings: PixelForgeSettings = {
   provider: "codex",
   outputRoot: "",
@@ -101,6 +103,7 @@ function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [preview, setPreview] = useState<ImageGeneration | null>(null);
+  const [activeView, setActiveView] = useState<AppView>("forge");
 
   const completedGenerations = useMemo(
     () => generations.filter((generation) => generation.status === "completed" && generation.outputPath),
@@ -257,12 +260,32 @@ function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div className="brand">
-          <img src={logoUrl} alt="" />
-          <div>
-            <h1>PixelForge</h1>
-            <span>{status}</span>
+        <div className="topbar-left">
+          <div className="brand">
+            <img src={logoUrl} alt="" />
+            <div>
+              <h1>PixelForge</h1>
+              <span>{status}</span>
+            </div>
           </div>
+          <nav className="view-tabs" aria-label="Primary">
+            <button
+              type="button"
+              className={activeView === "forge" ? "active" : ""}
+              onClick={() => setActiveView("forge")}
+            >
+              <Sparkles size={16} />
+              Forge
+            </button>
+            <button
+              type="button"
+              className={activeView === "settings" ? "active" : ""}
+              onClick={() => setActiveView("settings")}
+            >
+              <Settings size={16} />
+              Settings
+            </button>
+          </nav>
         </div>
         <div className="topbar-actions">
           <div className={`update-pill ${updateState.status}`}>
@@ -285,6 +308,19 @@ function App() {
         </div>
       </header>
 
+      {activeView === "settings" ? (
+        <SettingsView
+          settings={settings}
+          secretStatus={secretStatus}
+          apiKeyDraft={apiKeyDraft}
+          setApiKeyDraft={setApiKeyDraft}
+          updateSettings={updateSettings}
+          chooseOutputRoot={chooseOutputRoot}
+          saveOpenAiApiKey={saveOpenAiApiKey}
+          clearOpenAiApiKey={clearOpenAiApiKey}
+          updateState={updateState}
+        />
+      ) : (
       <section className="workspace">
         <aside className="control-panel">
           <div className="panel-section prompt-section">
@@ -309,14 +345,8 @@ function App() {
           <div className="panel-section">
             <div className="section-title">
               <Settings size={18} />
-              <h2>Generation</h2>
+              <h2>Run</h2>
             </div>
-            <label>
-              Provider
-              <select value={settings.provider} onChange={(event) => void updateSettings({ provider: event.target.value as PixelForgeSettings["provider"] })}>
-                {providerOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            </label>
             <div className="two-col">
               <label>
                 Count
@@ -335,116 +365,13 @@ function App() {
                 </select>
               </label>
             </div>
-
-            {settings.provider === "codex" ? (
-              <div className="provider-box">
-                <div className="provider-heading">
-                  <Terminal size={16} />
-                  <strong>Codex CLI</strong>
-                </div>
-                <label>
-                  Model override
-                  <input
-                    value={settings.codexModel}
-                    placeholder="Optional"
-                    onChange={(event) => void updateSettings({ codexModel: event.target.value })}
-                  />
-                </label>
-                <label>
-                  Reasoning
-                  <select value={settings.codexReasoningEffort} onChange={(event) => void updateSettings({ codexReasoningEffort: event.target.value as PixelForgeSettings["codexReasoningEffort"] })}>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="xhigh">Extra high</option>
-                  </select>
-                </label>
-              </div>
-            ) : (
-              <div className="provider-box">
-                <div className="provider-heading">
-                  <Cloud size={16} />
-                  <strong>OpenAI API</strong>
-                  {(secretStatus.openAiApiKeySaved || secretStatus.openAiApiKeyFromEnv) && <ShieldCheck size={16} className="saved-key" />}
-                </div>
-                <label>
-                  API key
-                  <div className="key-row">
-                    <input
-                      value={apiKeyDraft}
-                      type="password"
-                      placeholder={secretStatus.openAiApiKeyFromEnv ? "Using OPENAI_API_KEY" : secretStatus.openAiApiKeySaved ? "Saved locally" : "sk-..."}
-                      onChange={(event) => setApiKeyDraft(event.target.value)}
-                    />
-                    <button type="button" className="icon-button" title="Save API key" onClick={() => void saveOpenAiApiKey()}>
-                      <Save size={16} />
-                    </button>
-                    <button type="button" className="icon-button" title="Clear saved API key" onClick={() => void clearOpenAiApiKey()}>
-                      <X size={16} />
-                    </button>
-                  </div>
-                </label>
-                <label>
-                  Model
-                  <input value={settings.openAiModel} onChange={(event) => void updateSettings({ openAiModel: event.target.value })} />
-                </label>
-                <div className="two-col">
-                  <label>
-                    Size
-                    <select value={settings.openAiSize} onChange={(event) => void updateSettings({ openAiSize: event.target.value })}>
-                      {sizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
-                    </select>
-                  </label>
-                  <label>
-                    Quality
-                    <select value={settings.openAiQuality} onChange={(event) => void updateSettings({ openAiQuality: event.target.value as PixelForgeSettings["openAiQuality"] })}>
-                      <option value="auto">Auto</option>
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                      <option value="standard">Standard</option>
-                      <option value="hd">HD</option>
-                    </select>
-                  </label>
-                </div>
-                <div className="two-col">
-                  <label>
-                    Format
-                    <select value={settings.openAiFormat} onChange={(event) => void updateSettings({ openAiFormat: event.target.value as PixelForgeSettings["openAiFormat"] })}>
-                      <option value="png">PNG</option>
-                      <option value="jpeg">JPEG</option>
-                      <option value="webp">WebP</option>
-                    </select>
-                  </label>
-                  <label>
-                    Moderation
-                    <select value={settings.openAiModeration} onChange={(event) => void updateSettings({ openAiModeration: event.target.value as PixelForgeSettings["openAiModeration"] })}>
-                      <option value="auto">Auto</option>
-                      <option value="low">Low</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="panel-section">
-            <div className="section-title">
-              <FolderOpen size={18} />
-              <h2>Output</h2>
+            <div className="run-summary">
+              <span>{settings.provider === "codex" ? "Codex CLI" : "OpenAI API"}</span>
+              <button type="button" onClick={() => setActiveView("settings")}>
+                <Settings size={15} />
+                Settings
+              </button>
             </div>
-            <button type="button" className="path-button" onClick={() => void chooseOutputRoot()}>
-              <span>{settings.outputRoot || "Choose folder"}</span>
-              <FolderOpen size={16} />
-            </button>
-            <label className="toggle-row">
-              <span>Auto updates</span>
-              <input
-                type="checkbox"
-                checked={settings.autoUpdate}
-                onChange={(event) => void updateSettings({ autoUpdate: event.target.checked })}
-              />
-            </label>
           </div>
 
           <button className="generate-button" type="button" disabled={isGenerating} onClick={() => void generateImages()}>
@@ -512,6 +439,7 @@ function App() {
           </div>
         </aside>
       </section>
+      )}
 
       {preview && (
         <div className="preview-modal" onClick={() => setPreview(null)}>
@@ -544,6 +472,196 @@ function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; 
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function SettingsView({
+  settings,
+  secretStatus,
+  apiKeyDraft,
+  setApiKeyDraft,
+  updateSettings,
+  chooseOutputRoot,
+  saveOpenAiApiKey,
+  clearOpenAiApiKey,
+  updateState
+}: {
+  settings: PixelForgeSettings;
+  secretStatus: SecretStatus;
+  apiKeyDraft: string;
+  setApiKeyDraft: React.Dispatch<React.SetStateAction<string>>;
+  updateSettings: (patch: Partial<PixelForgeSettings>) => Promise<void>;
+  chooseOutputRoot: () => Promise<void>;
+  saveOpenAiApiKey: () => Promise<void>;
+  clearOpenAiApiKey: () => Promise<void>;
+  updateState: UpdateState;
+}) {
+  const keyState = secretStatus.openAiApiKeyFromEnv
+    ? "Using OPENAI_API_KEY"
+    : secretStatus.openAiApiKeySaved
+      ? "Saved locally"
+      : "Not configured";
+
+  return (
+    <section className="settings-page">
+      <div className="settings-heading">
+        <div>
+          <h2>Settings</h2>
+          <p>Provider, API, output, and update configuration for PixelForge.</p>
+        </div>
+        <div className="settings-state">
+          <ShieldCheck size={18} />
+          <span>{keyState}</span>
+        </div>
+      </div>
+
+      <div className="settings-grid-page">
+        <section className="settings-card">
+          <div className="settings-card-header">
+            <Settings size={19} />
+            <h3>Default Generator</h3>
+          </div>
+          <label>
+            Provider
+            <select value={settings.provider} onChange={(event) => void updateSettings({ provider: event.target.value as PixelForgeSettings["provider"] })}>
+              {providerOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+          <div className="two-col">
+            <label>
+              Count
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={settings.count}
+                onChange={(event) => void updateSettings({ count: Number(event.target.value) })}
+              />
+            </label>
+            <label>
+              Shape
+              <select value={settings.aspectRatio} onChange={(event) => void updateSettings({ aspectRatio: event.target.value as PixelForgeSettings["aspectRatio"] })}>
+                {aspectRatioOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section className="settings-card">
+          <div className="settings-card-header">
+            <Terminal size={19} />
+            <h3>Codex CLI</h3>
+          </div>
+          <label>
+            Model override
+            <input
+              value={settings.codexModel}
+              placeholder="Optional"
+              onChange={(event) => void updateSettings({ codexModel: event.target.value })}
+            />
+          </label>
+          <label>
+            Reasoning
+            <select value={settings.codexReasoningEffort} onChange={(event) => void updateSettings({ codexReasoningEffort: event.target.value as PixelForgeSettings["codexReasoningEffort"] })}>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="xhigh">Extra high</option>
+            </select>
+          </label>
+        </section>
+
+        <section className="settings-card wide">
+          <div className="settings-card-header">
+            <Cloud size={19} />
+            <h3>OpenAI API</h3>
+          </div>
+          <label>
+            API key
+            <div className="key-row settings-key-row">
+              <input
+                value={apiKeyDraft}
+                type="password"
+                placeholder={secretStatus.openAiApiKeyFromEnv ? "Using OPENAI_API_KEY" : secretStatus.openAiApiKeySaved ? "Saved locally" : "sk-..."}
+                onChange={(event) => setApiKeyDraft(event.target.value)}
+              />
+              <button type="button" className="icon-button" title="Save API key" onClick={() => void saveOpenAiApiKey()}>
+                <Save size={16} />
+              </button>
+              <button type="button" className="icon-button" title="Clear saved API key" onClick={() => void clearOpenAiApiKey()}>
+                <X size={16} />
+              </button>
+            </div>
+          </label>
+          <p className="settings-note">
+            Keys are stored in Electron user data with safeStorage when available. They are not written to the repository.
+          </p>
+          <div className="settings-openai-grid">
+            <label>
+              Model
+              <input value={settings.openAiModel} onChange={(event) => void updateSettings({ openAiModel: event.target.value })} />
+            </label>
+            <label>
+              Size
+              <select value={settings.openAiSize} onChange={(event) => void updateSettings({ openAiSize: event.target.value })}>
+                {sizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
+              </select>
+            </label>
+            <label>
+              Quality
+              <select value={settings.openAiQuality} onChange={(event) => void updateSettings({ openAiQuality: event.target.value as PixelForgeSettings["openAiQuality"] })}>
+                <option value="auto">Auto</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="standard">Standard</option>
+                <option value="hd">HD</option>
+              </select>
+            </label>
+            <label>
+              Format
+              <select value={settings.openAiFormat} onChange={(event) => void updateSettings({ openAiFormat: event.target.value as PixelForgeSettings["openAiFormat"] })}>
+                <option value="png">PNG</option>
+                <option value="jpeg">JPEG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </label>
+            <label>
+              Moderation
+              <select value={settings.openAiModeration} onChange={(event) => void updateSettings({ openAiModeration: event.target.value as PixelForgeSettings["openAiModeration"] })}>
+                <option value="auto">Auto</option>
+                <option value="low">Low</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section className="settings-card wide">
+          <div className="settings-card-header">
+            <FolderOpen size={19} />
+            <h3>Output And Updates</h3>
+          </div>
+          <button type="button" className="path-button" onClick={() => void chooseOutputRoot()}>
+            <span>{settings.outputRoot || "Choose folder"}</span>
+            <FolderOpen size={16} />
+          </button>
+          <div className="settings-row">
+            <label className="toggle-row">
+              <span>Auto updates</span>
+              <input
+                type="checkbox"
+                checked={settings.autoUpdate}
+                onChange={(event) => void updateSettings({ autoUpdate: event.target.checked })}
+              />
+            </label>
+            <div className={`update-pill ${updateState.status}`}>
+              <RefreshCw size={15} className={updateState.status === "checking" || updateState.status === "downloading" ? "spin" : ""} />
+              <span>v{updateState.currentVersion || "0.0.0"}</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
   );
 }
 
