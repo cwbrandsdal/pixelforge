@@ -1,5 +1,7 @@
 # PixelForge
 
+![PixelForge hero](assets/readme-hero.png)
+
 PixelForge is a Windows desktop app for generating image batches from a prompt.
 
 Generation backends:
