@@ -1,4 +1,4 @@
-// Generates PixelForge app icons from assets/icon-source.png.
+// Generates PixlForge app icons from assets/icon-source.png.
 //
 // Run with Electron so nativeImage handles image loading and resizing:
 //   npm run gen-icon
@@ -149,7 +149,7 @@ function main() {
       data: png(pixelSize),
     }))),
   );
-  console.log(`wrote PixelForge icons from ${width}x${height} source`);
+  console.log(`wrote PixlForge icons from ${width}x${height} source`);
 }
 
 app.whenReady().then(() => {

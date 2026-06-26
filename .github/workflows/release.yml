@@ -65,7 +65,7 @@ jobs:
 
       - name: Create draft release
         if: steps.release.outputs.exists != 'true'
-        run: gh release create ${{ steps.release.outputs.tag }} --draft --title "${{ steps.release.outputs.tag }}" --notes "PixelForge ${{ steps.release.outputs.tag }}" || echo "release already exists"
+        run: gh release create ${{ steps.release.outputs.tag }} --draft --title "${{ steps.release.outputs.tag }}" --notes "PixlForge ${{ steps.release.outputs.tag }}" || echo "release already exists"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

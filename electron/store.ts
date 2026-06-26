@@ -3,9 +3,9 @@ import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises
 import path from "node:path";
 import crypto from "node:crypto";
 import { isSupportedReferenceFile, mimeTypeForReferenceFile } from "./reference-files.js";
-import type { ImageGeneration, PixelForgeProject, PixelForgeSettings, PixelForgeState, ReferenceFile, SecretStatus } from "./types.js";
+import type { ImageGeneration, PixlForgeProject, PixlForgeSettings, PixlForgeState, ReferenceFile, SecretStatus } from "./types.js";
 
-const defaultSettings: PixelForgeSettings = {
+const defaultSettings: PixlForgeSettings = {
   provider: "codex",
   outputRoot: "",
   count: 3,
@@ -27,22 +27,22 @@ type SecretFile = {
   };
 };
 
-export class PixelForgeStore {
+export class PixlForgeStore {
   private readonly dataPath: string;
   private readonly secretPath: string;
   private readonly defaultOutputRoot: string;
 
   constructor() {
     const userData = app.getPath("userData");
-    this.dataPath = path.join(userData, "pixelforge-state.json");
-    this.secretPath = path.join(userData, "pixelforge-secrets.json");
+    this.dataPath = path.join(userData, "pixlforge-state.json");
+    this.secretPath = path.join(userData, "pixlforge-secrets.json");
     this.defaultOutputRoot = path.join(userData, "outputs");
   }
 
-  async load(): Promise<PixelForgeState> {
+  async load(): Promise<PixlForgeState> {
     await mkdir(this.defaultOutputRoot, { recursive: true });
     try {
-      const parsed = JSON.parse(await readFile(this.dataPath, "utf8")) as Partial<PixelForgeState>;
+      const parsed = JSON.parse(await readFile(this.dataPath, "utf8")) as Partial<PixlForgeState>;
       const settings = this.normalizeSettings(parsed.settings);
       const projects = await this.normalizeProjects(parsed.projects, settings);
       const activeProjectId = projects.some((project) => project.id === parsed.activeProjectId)
@@ -59,7 +59,7 @@ export class PixelForgeStore {
     } catch {
       const settings = this.normalizeSettings(undefined);
       const project = await this.createDefaultProject(settings);
-      const state: PixelForgeState = {
+      const state: PixlForgeState = {
         settings,
         projects: [project],
         activeProjectId: project.id,
@@ -70,24 +70,24 @@ export class PixelForgeStore {
     }
   }
 
-  async save(state: PixelForgeState): Promise<void> {
+  async save(state: PixlForgeState): Promise<void> {
     await mkdir(path.dirname(this.dataPath), { recursive: true });
     await writeFile(this.dataPath, JSON.stringify(state, null, 2), "utf8");
   }
 
-  async updateSettings(settings: PixelForgeSettings): Promise<PixelForgeSettings> {
+  async updateSettings(settings: PixlForgeSettings): Promise<PixlForgeSettings> {
     const state = await this.load();
     state.settings = this.normalizeSettings(settings);
     await this.save(state);
     return state.settings;
   }
 
-  async createProject(name: string): Promise<PixelForgeState> {
+  async createProject(name: string): Promise<PixlForgeState> {
     const state = await this.load();
     const now = new Date().toISOString();
     const id = crypto.randomUUID();
     const projectName = name.trim() || "Untitled Project";
-    const project: PixelForgeProject = {
+    const project: PixlForgeProject = {
       id,
       name: projectName,
       outputDir: path.join(state.settings.outputRoot, "projects", `${sanitizeFileName(projectName)}-${id.slice(0, 8)}`),
@@ -102,11 +102,11 @@ export class PixelForgeStore {
     return state;
   }
 
-  async updateProject(project: PixelForgeProject): Promise<PixelForgeProject> {
+  async updateProject(project: PixlForgeProject): Promise<PixlForgeProject> {
     const state = await this.load();
     const existing = state.projects.find((candidate) => candidate.id === project.id);
     if (!existing) throw new Error("Project not found.");
-    const updated: PixelForgeProject = {
+    const updated: PixlForgeProject = {
       ...existing,
       name: project.name.trim() || existing.name,
       updatedAt: new Date().toISOString()
@@ -116,7 +116,7 @@ export class PixelForgeStore {
     return updated;
   }
 
-  async setActiveProject(projectId: string): Promise<PixelForgeState> {
+  async setActiveProject(projectId: string): Promise<PixlForgeState> {
     const state = await this.load();
     if (!state.projects.some((project) => project.id === projectId)) {
       throw new Error("Project not found.");
@@ -126,7 +126,7 @@ export class PixelForgeStore {
     return state;
   }
 
-  async deleteProject(projectId: string): Promise<PixelForgeState> {
+  async deleteProject(projectId: string): Promise<PixlForgeState> {
     const state = await this.load();
     if (state.projects.length <= 1) {
       throw new Error("At least one project is required.");
@@ -147,7 +147,7 @@ export class PixelForgeStore {
     return state;
   }
 
-  async addReferenceFiles(projectId: string, filePaths: string[]): Promise<PixelForgeProject> {
+  async addReferenceFiles(projectId: string, filePaths: string[]): Promise<PixlForgeProject> {
     const state = await this.load();
     const project = state.projects.find((candidate) => candidate.id === projectId);
     if (!project) throw new Error("Project not found.");
@@ -174,7 +174,7 @@ export class PixelForgeStore {
       });
     }
 
-    const updated: PixelForgeProject = {
+    const updated: PixlForgeProject = {
       ...project,
       referenceFiles: [...added, ...project.referenceFiles],
       updatedAt: new Date().toISOString()
@@ -184,12 +184,12 @@ export class PixelForgeStore {
     return updated;
   }
 
-  async removeReferenceFile(projectId: string, referenceId: string): Promise<PixelForgeProject> {
+  async removeReferenceFile(projectId: string, referenceId: string): Promise<PixlForgeProject> {
     const state = await this.load();
     const project = state.projects.find((candidate) => candidate.id === projectId);
     if (!project) throw new Error("Project not found.");
     const reference = project.referenceFiles.find((candidate) => candidate.id === referenceId);
-    const updated: PixelForgeProject = {
+    const updated: PixlForgeProject = {
       ...project,
       referenceFiles: project.referenceFiles.filter((candidate) => candidate.id !== referenceId),
       updatedAt: new Date().toISOString()
@@ -271,7 +271,7 @@ export class PixelForgeStore {
     };
   }
 
-  private normalizeSettings(settings: Partial<PixelForgeSettings> | undefined): PixelForgeSettings {
+  private normalizeSettings(settings: Partial<PixlForgeSettings> | undefined): PixlForgeSettings {
     const merged = { ...defaultSettings, ...(settings ?? {}) };
     return {
       ...merged,
@@ -289,8 +289,8 @@ export class PixelForgeStore {
     };
   }
 
-  private async normalizeProjects(projects: PixelForgeProject[] | undefined, settings: PixelForgeSettings): Promise<PixelForgeProject[]> {
-    const normalized = (projects ?? []).map((project) => normalizeProject(project)).filter((project): project is PixelForgeProject => Boolean(project));
+  private async normalizeProjects(projects: PixlForgeProject[] | undefined, settings: PixlForgeSettings): Promise<PixlForgeProject[]> {
+    const normalized = (projects ?? []).map((project) => normalizeProject(project)).filter((project): project is PixlForgeProject => Boolean(project));
     if (!normalized.length) {
       normalized.push(await this.createDefaultProject(settings));
     }
@@ -300,7 +300,7 @@ export class PixelForgeStore {
     return normalized.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
-  private async createDefaultProject(settings: PixelForgeSettings): Promise<PixelForgeProject> {
+  private async createDefaultProject(settings: PixlForgeSettings): Promise<PixlForgeProject> {
     const now = new Date().toISOString();
     const outputDir = path.join(settings.outputRoot || this.defaultOutputRoot, "projects", "default-project");
     await mkdir(outputDir, { recursive: true });
@@ -332,7 +332,7 @@ export class PixelForgeStore {
   }
 }
 
-function normalizeProject(value: Partial<PixelForgeProject>): PixelForgeProject | null {
+function normalizeProject(value: Partial<PixlForgeProject>): PixlForgeProject | null {
   if (!value.id || !value.name || !value.outputDir) return null;
   const timestamp = value.updatedAt ?? value.createdAt ?? new Date().toISOString();
   return {
@@ -391,5 +391,5 @@ function sanitizeFileName(value: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 80) || "pixelforge";
+    .slice(0, 80) || "pixlforge";
 }

@@ -12,7 +12,7 @@ export type OpenAiQuality = "auto" | "low" | "medium" | "high" | "standard" | "h
 
 export type OpenAiFormat = "png" | "jpeg" | "webp";
 
-export interface PixelForgeSettings {
+export interface PixlForgeSettings {
   provider: ImageProvider;
   outputRoot: string;
   count: number;
@@ -36,7 +36,7 @@ export interface ReferenceFile {
   addedAt: string;
 }
 
-export interface PixelForgeProject {
+export interface PixlForgeProject {
   id: string;
   name: string;
   outputDir: string;
@@ -64,9 +64,9 @@ export interface ImageGeneration {
   referenceFilePaths: string[];
 }
 
-export interface PixelForgeState {
-  settings: PixelForgeSettings;
-  projects: PixelForgeProject[];
+export interface PixlForgeState {
+  settings: PixlForgeSettings;
+  projects: PixlForgeProject[];
   activeProjectId: string;
   generations: ImageGeneration[];
 }
@@ -74,7 +74,7 @@ export interface PixelForgeState {
 export interface GenerateImagesRequest {
   projectId: string;
   prompt: string;
-  settings: PixelForgeSettings;
+  settings: PixlForgeSettings;
 }
 
 export interface GenerateImagesResult {

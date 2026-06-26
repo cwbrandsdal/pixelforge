@@ -19,15 +19,15 @@ import {
   mimeTypeForReferenceFile,
   referenceFileTypeLabel
 } from "./reference-files.js";
-import { PixelForgeStore } from "./store.js";
+import { PixlForgeStore } from "./store.js";
 import type {
   GenerateImagesRequest,
   GenerateImagesResult,
   GenerationKind,
   GenerationProvider,
   ImageGeneration,
-  PixelForgeProject,
-  PixelForgeSettings,
+  PixlForgeProject,
+  PixlForgeSettings,
   ReferenceFile,
   UpscaleImagesRequest,
   UpscaleImagesResult,
@@ -37,11 +37,11 @@ import type {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const isDev = !app.isPackaged;
-const devRendererPort = Number(process.env.PIXELFORGE_DEV_RENDERER_PORT || "17851");
-const releaseUrl = "https://github.com/cwbrandsdal/pixelforge/releases";
+const devRendererPort = Number(process.env.PIXLFORGE_DEV_RENDERER_PORT || "17851");
+const releaseUrl = "https://github.com/cwbrandsdal/pixlforge/releases";
 const updateCheckIntervalMs = 4 * 60 * 60 * 1000;
 
-const store = new PixelForgeStore();
+const store = new PixlForgeStore();
 const assetTokens = new Map<string, string>();
 let mainWindow: BrowserWindow | null = null;
 let assetServer: Server | null = null;
@@ -71,7 +71,7 @@ async function createWindow(): Promise<void> {
     height: 940,
     minWidth: 1060,
     minHeight: 720,
-    title: "PixelForge",
+    title: "PixlForge",
     backgroundColor: "#07192c",
     autoHideMenuBar: true,
     icon: path.join(__dirname, "../assets/icon.png"),
@@ -197,14 +197,14 @@ function sanitizeFileName(value: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 80) || "pixelforge";
+    .slice(0, 80) || "pixlforge";
 }
 
-function normalizeCodexReasoningEffort(value: PixelForgeSettings["codexReasoningEffort"]): PixelForgeSettings["codexReasoningEffort"] {
+function normalizeCodexReasoningEffort(value: PixlForgeSettings["codexReasoningEffort"]): PixlForgeSettings["codexReasoningEffort"] {
   return value === "medium" || value === "high" || value === "xhigh" ? value : "low";
 }
 
-function sizeForAspectRatio(aspectRatio: PixelForgeSettings["aspectRatio"]): string {
+function sizeForAspectRatio(aspectRatio: PixlForgeSettings["aspectRatio"]): string {
   if (aspectRatio === "16:9") return "1536x864";
   if (aspectRatio === "9:16") return "864x1536";
   if (aspectRatio === "4:3") return "1536x1152";
@@ -212,7 +212,7 @@ function sizeForAspectRatio(aspectRatio: PixelForgeSettings["aspectRatio"]): str
   return "1024x1024";
 }
 
-function buildCodexImagePrompt(prompt: string, settings: PixelForgeSettings, referenceFiles: ReferenceFile[], referenceTextContext: string): string {
+function buildCodexImagePrompt(prompt: string, settings: PixlForgeSettings, referenceFiles: ReferenceFile[], referenceTextContext: string): string {
   const count = Math.max(1, Math.min(10, Math.floor(settings.count)));
   const variants = Array.from({ length: count }, (_value, index) => {
     const variant = index + 1;
@@ -225,7 +225,7 @@ function buildCodexImagePrompt(prompt: string, settings: PixelForgeSettings, ref
   return [
     "$imagegen",
     "",
-    `Generate ${count} separate PixelForge image${count === 1 ? "" : "s"} from this prompt.`,
+    `Generate ${count} separate PixlForge image${count === 1 ? "" : "s"} from this prompt.`,
     "",
     "Important execution rule: make one separate built-in image generation call per variant. Do not use one image as the answer for multiple variants.",
     `Target aspect ratio: ${settings.aspectRatio}.`,
@@ -251,15 +251,15 @@ function buildCodexImagePrompt(prompt: string, settings: PixelForgeSettings, ref
     "- Generate only the requested images using the built-in image generation tool.",
     "- Do not search the filesystem. If a non-image reference must be read, read only the listed reference file path.",
     "- Do not inspect CODEX_HOME or generated_images.",
-    "- Do not copy, move, rename, inspect, or save files manually. PixelForge will collect the generated images after this run.",
+    "- Do not copy, move, rename, inspect, or save files manually. PixlForge will collect the generated images after this run.",
     "- After all images are generated, reply with only: GENERATED"
   ].join("\n");
 }
 
 async function runCodexGeneration(
   prompt: string,
-  settings: PixelForgeSettings,
-  project: PixelForgeProject,
+  settings: PixlForgeSettings,
+  project: PixlForgeProject,
   referenceFiles: ReferenceFile[],
   emitLog: (message: string, stream?: "info" | "stdout" | "stderr" | "error") => void
 ): Promise<ImageGeneration[]> {
@@ -442,8 +442,8 @@ async function collectGeneratedImages(
 
 async function runOpenAiGeneration(
   prompt: string,
-  settings: PixelForgeSettings,
-  project: PixelForgeProject,
+  settings: PixlForgeSettings,
+  project: PixlForgeProject,
   referenceFiles: ReferenceFile[],
   emitLog: (message: string, stream?: "info" | "stdout" | "stderr" | "error") => void
 ): Promise<ImageGeneration[]> {
@@ -479,7 +479,7 @@ async function runOpenAiGeneration(
     emitLog(`Using ${openAiReferenceImages.length} image reference${openAiReferenceImages.length === 1 ? "" : "s"} through the image edits endpoint.`);
   }
   if (referenceFiles.length && !supportsImageReferences) {
-    emitLog("DALL-E models do not support PixelForge image reference attachments; supported text excerpts are appended to the prompt.");
+    emitLog("DALL-E models do not support PixlForge image reference attachments; supported text excerpts are appended to the prompt.");
   }
   if (unsupportedReferenceCount > 0) {
     emitLog(`Stored ${unsupportedReferenceCount} reference file${unsupportedReferenceCount === 1 ? "" : "s"} that OpenAI Images cannot receive directly; supported text excerpts are appended to the prompt.`);
@@ -556,7 +556,7 @@ async function runOpenAiGeneration(
   return results.slice(0, count);
 }
 
-function buildOpenAiRequestBody(prompt: string, settings: PixelForgeSettings, count: number): Record<string, unknown> {
+function buildOpenAiRequestBody(prompt: string, settings: PixlForgeSettings, count: number): Record<string, unknown> {
   const model = settings.openAiModel.trim() || "gpt-image-2";
   if (model.startsWith("dall-e")) {
     return {
@@ -584,7 +584,7 @@ function buildOpenAiRequestBody(prompt: string, settings: PixelForgeSettings, co
 
 function buildOpenAiEditRequestBody(
   prompt: string,
-  settings: PixelForgeSettings,
+  settings: PixlForgeSettings,
   count: number,
   images: OpenAiReferenceImage[]
 ): Record<string, unknown> {
@@ -740,7 +740,7 @@ async function downloadImage(url: string): Promise<Buffer> {
 
 async function runLocalUpscale(
   sourceGenerations: ImageGeneration[],
-  project: PixelForgeProject,
+  project: PixlForgeProject,
   emitLog: (message: string, stream?: "info" | "stdout" | "stderr" | "error") => void
 ): Promise<ImageGeneration[]> {
   const candidates = sourceGenerations.filter((generation) =>
@@ -806,7 +806,7 @@ async function runLocalUpscale(
         outputPath,
         "completed",
         "",
-        "PixelForge local upscaler",
+        "PixlForge local upscaler",
         `${target.width}x${target.height}`,
         batchId,
         index + 1,
@@ -830,7 +830,7 @@ async function runLocalUpscale(
         "",
         "failed",
         message,
-        "PixelForge local upscaler",
+        "PixlForge local upscaler",
         "4K",
         batchId,
         index + 1,
@@ -980,13 +980,13 @@ function applyAutoUpdateSetting(enabled: boolean): void {
 
 function registerIpcHandlers(): void {
   ipcMain.handle("state:load", () => store.load());
-  ipcMain.handle("settings:update", async (_event, settings: PixelForgeSettings) => {
+  ipcMain.handle("settings:update", async (_event, settings: PixlForgeSettings) => {
     const saved = await store.updateSettings(settings);
     applyAutoUpdateSetting(saved.autoUpdate);
     return saved;
   });
   ipcMain.handle("project:create", (_event, name: string) => store.createProject(name));
-  ipcMain.handle("project:update", (_event, project: PixelForgeProject) => store.updateProject(project));
+  ipcMain.handle("project:update", (_event, project: PixlForgeProject) => store.updateProject(project));
   ipcMain.handle("project:delete", (_event, projectId: string) => store.deleteProject(projectId));
   ipcMain.handle("project:setActive", (_event, projectId: string) => store.setActiveProject(projectId));
   ipcMain.handle("project:addReferenceFiles", async (event, projectId: string) => {
@@ -1054,7 +1054,7 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle("output:chooseRoot", async (event) => {
     const options: Electron.OpenDialogOptions = {
-      title: "Choose PixelForge output folder",
+      title: "Choose PixlForge output folder",
       properties: ["openDirectory", "createDirectory"]
     };
     const window = BrowserWindow.fromWebContents(event.sender);
@@ -1171,7 +1171,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   app.whenReady().then(async () => {
-    app.setAppUserModelId("no.cwb.pixelforge");
+    app.setAppUserModelId("no.cwb.pixlforge");
     registerIpcHandlers();
     await startAssetServer();
     await createWindow();

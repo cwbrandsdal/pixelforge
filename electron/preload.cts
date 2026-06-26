@@ -1,11 +1,11 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { GenerateImagesRequest, PixelForgeProject, PixelForgeSettings, UpscaleImagesRequest } from "./types";
+import type { GenerateImagesRequest, PixlForgeProject, PixlForgeSettings, UpscaleImagesRequest } from "./types";
 
 const api = {
   loadState: () => ipcRenderer.invoke("state:load"),
-  updateSettings: (settings: PixelForgeSettings) => ipcRenderer.invoke("settings:update", settings),
+  updateSettings: (settings: PixlForgeSettings) => ipcRenderer.invoke("settings:update", settings),
   createProject: (name: string) => ipcRenderer.invoke("project:create", name),
-  updateProject: (project: PixelForgeProject) => ipcRenderer.invoke("project:update", project),
+  updateProject: (project: PixlForgeProject) => ipcRenderer.invoke("project:update", project),
   deleteProject: (projectId: string) => ipcRenderer.invoke("project:delete", projectId),
   setActiveProject: (projectId: string) => ipcRenderer.invoke("project:setActive", projectId),
   addProjectReferenceFiles: (projectId: string) => ipcRenderer.invoke("project:addReferenceFiles", projectId),
@@ -43,4 +43,4 @@ const api = {
   }
 };
 
-contextBridge.exposeInMainWorld("pixelforge", api);
+contextBridge.exposeInMainWorld("pixlforge", api);

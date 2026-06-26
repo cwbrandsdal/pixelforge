@@ -2,9 +2,9 @@ import type {
   GenerateImagesRequest,
   GenerateImagesResult,
   ImageGeneration,
-  PixelForgeProject,
-  PixelForgeSettings,
-  PixelForgeState,
+  PixlForgeProject,
+  PixlForgeSettings,
+  PixlForgeState,
   SecretStatus,
   UpscaleImagesRequest,
   UpscaleImagesResult,
@@ -15,15 +15,15 @@ export {};
 
 declare global {
   interface Window {
-    pixelforge: {
-      loadState: () => Promise<PixelForgeState>;
-      updateSettings: (settings: PixelForgeSettings) => Promise<PixelForgeSettings>;
-      createProject: (name: string) => Promise<PixelForgeState>;
-      updateProject: (project: PixelForgeProject) => Promise<PixelForgeProject>;
-      deleteProject: (projectId: string) => Promise<PixelForgeState>;
-      setActiveProject: (projectId: string) => Promise<PixelForgeState>;
-      addProjectReferenceFiles: (projectId: string) => Promise<PixelForgeProject>;
-      removeProjectReferenceFile: (projectId: string, referenceId: string) => Promise<PixelForgeProject>;
+    pixlforge: {
+      loadState: () => Promise<PixlForgeState>;
+      updateSettings: (settings: PixlForgeSettings) => Promise<PixlForgeSettings>;
+      createProject: (name: string) => Promise<PixlForgeState>;
+      updateProject: (project: PixlForgeProject) => Promise<PixlForgeProject>;
+      deleteProject: (projectId: string) => Promise<PixlForgeState>;
+      setActiveProject: (projectId: string) => Promise<PixlForgeState>;
+      addProjectReferenceFiles: (projectId: string) => Promise<PixlForgeProject>;
+      removeProjectReferenceFile: (projectId: string, referenceId: string) => Promise<PixlForgeProject>;
       chooseOutputRoot: () => Promise<string | null>;
       generateImages: (request: GenerateImagesRequest) => Promise<GenerateImagesResult>;
       upscaleImages: (request: UpscaleImagesRequest) => Promise<UpscaleImagesResult>;

@@ -30,7 +30,7 @@ import {
   Wand2,
   X
 } from "lucide-react";
-import type { ImageGeneration, PixelForgeProject, PixelForgeSettings, ReferenceFile, SecretStatus, UpdateState } from "../shared/types";
+import type { ImageGeneration, PixlForgeProject, PixlForgeSettings, ReferenceFile, SecretStatus, UpdateState } from "../shared/types";
 import "./styles.css";
 
 type LogEntry = {
@@ -41,7 +41,7 @@ type LogEntry = {
 
 type AppView = "forge" | "settings";
 
-const emptySettings: PixelForgeSettings = {
+const emptySettings: PixlForgeSettings = {
   provider: "codex",
   outputRoot: "",
   count: 3,
@@ -94,14 +94,14 @@ const sizeOptions = [
 
 const promptExamples = [
   "A cinematic product render of a compact desktop app forging pixels into a luminous image, dark workbench, lime accent light, crisp details",
-  "Three clean editorial poster variants for a generative image tool named PixelForge, premium software aesthetic, no mockup UI text",
+  "Three clean editorial poster variants for a generative image tool named PixlForge, premium software aesthetic, no mockup UI text",
   "A friendly robot blacksmith shaping colorful image pixels on an anvil, high-end 3D illustration, navy background, lime highlights"
 ];
 const logoUrl = new URL("../../assets/icon.png", import.meta.url).href;
 
 function App() {
-  const [settings, setSettings] = useState<PixelForgeSettings>(emptySettings);
-  const [projects, setProjects] = useState<PixelForgeProject[]>([]);
+  const [settings, setSettings] = useState<PixlForgeSettings>(emptySettings);
+  const [projects, setProjects] = useState<PixlForgeProject[]>([]);
   const [activeProjectId, setActiveProjectId] = useState("");
   const [generations, setGenerations] = useState<ImageGeneration[]>([]);
   const [assetUrls, setAssetUrls] = useState<Record<string, string>>({});
@@ -150,19 +150,19 @@ function App() {
   );
 
   useEffect(() => {
-    if (!window.pixelforge) {
+    if (!window.pixlforge) {
       setStatus("Electron preload API was not available.");
       return;
     }
 
-    void window.pixelforge.loadState().then((state) => {
+    void window.pixlforge.loadState().then((state) => {
       setSettings(state.settings);
       setProjects(state.projects);
       setActiveProjectId(state.activeProjectId);
       setGenerations(state.generations);
       return Promise.all([
-        window.pixelforge.getSecretStatus(),
-        window.pixelforge.getUpdateState()
+        window.pixlforge.getSecretStatus(),
+        window.pixlforge.getUpdateState()
       ]);
     }).then(([nextSecretStatus, nextUpdateState]) => {
       setSecretStatus(nextSecretStatus);
@@ -171,14 +171,14 @@ function App() {
       setStatus(error instanceof Error ? error.message : String(error));
     });
 
-    const removeLog = window.pixelforge.onGenerationLog((entry) => {
+    const removeLog = window.pixlforge.onGenerationLog((entry) => {
       setLogs((current) => [...current, entry].slice(-160));
     });
-    const removeGenerationUpdate = window.pixelforge.onGenerationUpdate((payload) => {
+    const removeGenerationUpdate = window.pixlforge.onGenerationUpdate((payload) => {
       setGenerations(payload.generations);
       setStatus(payload.message);
     });
-    const removeUpdateState = window.pixelforge.onUpdateState(setUpdateState);
+    const removeUpdateState = window.pixlforge.onUpdateState(setUpdateState);
     return () => {
       removeLog();
       removeGenerationUpdate();
@@ -198,7 +198,7 @@ function App() {
     let canceled = false;
     void Promise.all(paths.map(async (filePath) => {
       try {
-        return [filePath, await window.pixelforge.getAssetUrl(filePath)] as const;
+        return [filePath, await window.pixlforge.getAssetUrl(filePath)] as const;
       } catch {
         return [filePath, ""] as const;
       }
@@ -227,11 +227,11 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [preview]);
 
-  async function updateSettings(patch: Partial<PixelForgeSettings>) {
+  async function updateSettings(patch: Partial<PixlForgeSettings>) {
     const next = { ...settings, ...patch };
     setSettings(next);
     try {
-      const saved = await window.pixelforge.updateSettings(next);
+      const saved = await window.pixlforge.updateSettings(next);
       setSettings(saved);
       setStatus("Settings saved");
     } catch (error) {
@@ -240,13 +240,13 @@ function App() {
   }
 
   async function chooseOutputRoot() {
-    const outputRoot = await window.pixelforge.chooseOutputRoot();
+    const outputRoot = await window.pixlforge.chooseOutputRoot();
     if (outputRoot) {
       await updateSettings({ outputRoot });
     }
   }
 
-  function applyState(state: { settings: PixelForgeSettings; projects: PixelForgeProject[]; activeProjectId: string; generations: ImageGeneration[] }) {
+  function applyState(state: { settings: PixlForgeSettings; projects: PixlForgeProject[]; activeProjectId: string; generations: ImageGeneration[] }) {
     setSettings(state.settings);
     setProjects(state.projects);
     setActiveProjectId(state.activeProjectId);
@@ -256,7 +256,7 @@ function App() {
   async function selectProject(projectId: string) {
     setActiveProjectId(projectId);
     try {
-      const state = await window.pixelforge.setActiveProject(projectId);
+      const state = await window.pixlforge.setActiveProject(projectId);
       applyState(state);
       setStatus(`Project: ${state.projects.find((project) => project.id === state.activeProjectId)?.name ?? "Selected"}`);
     } catch (error) {
@@ -271,7 +271,7 @@ function App() {
       return;
     }
     try {
-      const state = await window.pixelforge.createProject(name);
+      const state = await window.pixlforge.createProject(name);
       applyState(state);
       setNewProjectName("");
       setStatus(`Created ${name}`);
@@ -283,7 +283,7 @@ function App() {
   async function deleteSelectedProject() {
     if (!selectedProject || projects.length <= 1) return;
     try {
-      const state = await window.pixelforge.deleteProject(selectedProject.id);
+      const state = await window.pixlforge.deleteProject(selectedProject.id);
       applyState(state);
       setStatus("Project deleted");
     } catch (error) {
@@ -294,7 +294,7 @@ function App() {
   async function addReferenceFiles() {
     if (!selectedProject) return;
     try {
-      const updated = await window.pixelforge.addProjectReferenceFiles(selectedProject.id);
+      const updated = await window.pixlforge.addProjectReferenceFiles(selectedProject.id);
       setProjects((current) => current.map((project) => project.id === updated.id ? updated : project));
       setStatus("Reference files updated");
     } catch (error) {
@@ -305,7 +305,7 @@ function App() {
   async function removeReferenceFile(reference: ReferenceFile) {
     if (!selectedProject) return;
     try {
-      const updated = await window.pixelforge.removeProjectReferenceFile(selectedProject.id, reference.id);
+      const updated = await window.pixlforge.removeProjectReferenceFile(selectedProject.id, reference.id);
       setProjects((current) => current.map((project) => project.id === updated.id ? updated : project));
       setStatus("Reference file removed");
     } catch (error) {
@@ -315,7 +315,7 @@ function App() {
 
   async function saveOpenAiApiKey() {
     try {
-      const nextStatus = await window.pixelforge.saveOpenAiApiKey(apiKeyDraft);
+      const nextStatus = await window.pixlforge.saveOpenAiApiKey(apiKeyDraft);
       setSecretStatus(nextStatus);
       setApiKeyDraft("");
       setStatus(apiKeyDraft.trim() ? "OpenAI API key saved" : "OpenAI API key cleared");
@@ -325,7 +325,7 @@ function App() {
   }
 
   async function clearOpenAiApiKey() {
-    const nextStatus = await window.pixelforge.clearOpenAiApiKey();
+    const nextStatus = await window.pixlforge.clearOpenAiApiKey();
     setSecretStatus(nextStatus);
     setApiKeyDraft("");
     setStatus("OpenAI API key cleared");
@@ -344,7 +344,7 @@ function App() {
       if (!selectedProject) {
         throw new Error("Create or select a project before generating images.");
       }
-      await window.pixelforge.generateImages({ projectId: selectedProject.id, prompt, settings });
+      await window.pixlforge.generateImages({ projectId: selectedProject.id, prompt, settings });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Generation failed");
     } finally {
@@ -353,7 +353,7 @@ function App() {
   }
 
   async function deleteGeneration(generation: ImageGeneration) {
-    await window.pixelforge.deleteGeneration(generation.id);
+    await window.pixlforge.deleteGeneration(generation.id);
     setGenerations((current) => current.filter((candidate) => candidate.id !== generation.id));
     setSelectedGenerationIds((current) => current.filter((id) => id !== generation.id));
     if (preview?.id === generation.id) setPreview(null);
@@ -361,7 +361,7 @@ function App() {
   }
 
   async function copyImage(generation: ImageGeneration) {
-    const copied = await window.pixelforge.copyImage(generation.outputPath);
+    const copied = await window.pixlforge.copyImage(generation.outputPath);
     setStatus(copied ? "Image copied" : "Image could not be copied");
   }
 
@@ -388,7 +388,7 @@ function App() {
     setLogs([]);
     setStatus("Creating 4K finals");
     try {
-      await window.pixelforge.upscaleImages({ projectId: selectedProject.id, generationIds: ids });
+      await window.pixlforge.upscaleImages({ projectId: selectedProject.id, generationIds: ids });
       setSelectedGenerationIds((current) => current.filter((id) => !ids.includes(id)));
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Upscale failed");
@@ -423,7 +423,7 @@ function App() {
           <div className="brand">
             <img src={logoUrl} alt="" />
             <div>
-              <h1>PixelForge</h1>
+              <h1>PixlForge</h1>
               <span>{status}</span>
             </div>
           </div>
@@ -452,16 +452,16 @@ function App() {
             <span>{updateStatusText()}</span>
           </div>
           {updateState.status === "ready" ? (
-            <button type="button" className="icon-button labeled" onClick={() => window.pixelforge.installUpdate()}>
+            <button type="button" className="icon-button labeled" onClick={() => window.pixlforge.installUpdate()}>
               <RefreshCw size={16} />
               Restart
             </button>
           ) : (
-            <button type="button" className="icon-button" title="Check for updates" onClick={() => window.pixelforge.checkForUpdates()}>
+            <button type="button" className="icon-button" title="Check for updates" onClick={() => window.pixlforge.checkForUpdates()}>
               <RefreshCw size={17} />
             </button>
           )}
-          <button type="button" className="icon-button" title="Open releases" onClick={() => window.pixelforge.openReleasesPage()}>
+          <button type="button" className="icon-button" title="Open releases" onClick={() => window.pixlforge.openReleasesPage()}>
             <ExternalLink size={17} />
           </button>
         </div>
@@ -518,7 +518,7 @@ function App() {
               </button>
             </div>
             {selectedProject && (
-              <button type="button" className="path-button" onClick={() => void window.pixelforge.showItemInFolder(selectedProject.outputDir)}>
+              <button type="button" className="path-button" onClick={() => void window.pixlforge.showItemInFolder(selectedProject.outputDir)}>
                 <span>{selectedProject.outputDir}</span>
                 <FolderOpen size={16} />
               </button>
@@ -562,7 +562,7 @@ function App() {
               </label>
               <label>
                 Shape
-                <select value={settings.aspectRatio} onChange={(event) => void updateSettings({ aspectRatio: event.target.value as PixelForgeSettings["aspectRatio"] })}>
+                <select value={settings.aspectRatio} onChange={(event) => void updateSettings({ aspectRatio: event.target.value as PixlForgeSettings["aspectRatio"] })}>
                   {aspectRatioOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </label>
@@ -688,8 +688,8 @@ function App() {
                       </button>
                     )}
                     <button type="button" title="Copy image" onClick={() => void copyImage(generation)}><Copy size={15} /></button>
-                    <button type="button" title="Show in folder" onClick={() => void window.pixelforge.showItemInFolder(generation.outputPath)}><FolderOpen size={15} /></button>
-                    <button type="button" title="Open file" onClick={() => void window.pixelforge.openPath(generation.outputPath)}><ExternalLink size={15} /></button>
+                    <button type="button" title="Show in folder" onClick={() => void window.pixlforge.showItemInFolder(generation.outputPath)}><FolderOpen size={15} /></button>
+                    <button type="button" title="Open file" onClick={() => void window.pixlforge.openPath(generation.outputPath)}><ExternalLink size={15} /></button>
                     <button type="button" title="Delete image" onClick={() => void deleteGeneration(generation)}><Trash2 size={15} /></button>
                   </div>
                 </article>
@@ -750,7 +750,7 @@ function App() {
               <div className="card-actions">
                 <button type="button" title="Close preview" onClick={() => setPreview(null)}><X size={15} /></button>
                 <button type="button" title="Copy image" onClick={() => void copyImage(preview)}><Copy size={15} /></button>
-                <button type="button" title="Show in folder" onClick={() => void window.pixelforge.showItemInFolder(preview.outputPath)}><FolderOpen size={15} /></button>
+                <button type="button" title="Show in folder" onClick={() => void window.pixlforge.showItemInFolder(preview.outputPath)}><FolderOpen size={15} /></button>
               </div>
             </footer>
           </div>
@@ -774,7 +774,7 @@ function generationTitle(generation: ImageGeneration): string {
   if (generation.kind === "final") return `4K Final #${generation.index}`;
   if (generation.provider === "codex") return `Codex Draft #${generation.index}`;
   if (generation.provider === "openai") return `OpenAI Draft #${generation.index}`;
-  return `PixelForge #${generation.index}`;
+  return `PixlForge #${generation.index}`;
 }
 
 function referenceIcon(reference: ReferenceFile): React.ReactNode {
@@ -809,11 +809,11 @@ function SettingsView({
   clearOpenAiApiKey,
   updateState
 }: {
-  settings: PixelForgeSettings;
+  settings: PixlForgeSettings;
   secretStatus: SecretStatus;
   apiKeyDraft: string;
   setApiKeyDraft: React.Dispatch<React.SetStateAction<string>>;
-  updateSettings: (patch: Partial<PixelForgeSettings>) => Promise<void>;
+  updateSettings: (patch: Partial<PixlForgeSettings>) => Promise<void>;
   chooseOutputRoot: () => Promise<void>;
   saveOpenAiApiKey: () => Promise<void>;
   clearOpenAiApiKey: () => Promise<void>;
@@ -830,7 +830,7 @@ function SettingsView({
       <div className="settings-heading">
         <div>
           <h2>Settings</h2>
-          <p>Provider, API, output, and update configuration for PixelForge.</p>
+          <p>Provider, API, output, and update configuration for PixlForge.</p>
         </div>
         <div className="settings-state">
           <ShieldCheck size={18} />
@@ -846,7 +846,7 @@ function SettingsView({
           </div>
           <label>
             Provider
-            <select value={settings.provider} onChange={(event) => void updateSettings({ provider: event.target.value as PixelForgeSettings["provider"] })}>
+            <select value={settings.provider} onChange={(event) => void updateSettings({ provider: event.target.value as PixlForgeSettings["provider"] })}>
               {providerOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </label>
@@ -863,7 +863,7 @@ function SettingsView({
             </label>
             <label>
               Shape
-              <select value={settings.aspectRatio} onChange={(event) => void updateSettings({ aspectRatio: event.target.value as PixelForgeSettings["aspectRatio"] })}>
+              <select value={settings.aspectRatio} onChange={(event) => void updateSettings({ aspectRatio: event.target.value as PixlForgeSettings["aspectRatio"] })}>
                 {aspectRatioOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>
@@ -885,7 +885,7 @@ function SettingsView({
           </label>
           <label>
             Reasoning
-            <select value={settings.codexReasoningEffort} onChange={(event) => void updateSettings({ codexReasoningEffort: event.target.value as PixelForgeSettings["codexReasoningEffort"] })}>
+            <select value={settings.codexReasoningEffort} onChange={(event) => void updateSettings({ codexReasoningEffort: event.target.value as PixlForgeSettings["codexReasoningEffort"] })}>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
@@ -932,7 +932,7 @@ function SettingsView({
             </label>
             <label>
               Quality
-              <select value={settings.openAiQuality} onChange={(event) => void updateSettings({ openAiQuality: event.target.value as PixelForgeSettings["openAiQuality"] })}>
+              <select value={settings.openAiQuality} onChange={(event) => void updateSettings({ openAiQuality: event.target.value as PixlForgeSettings["openAiQuality"] })}>
                 <option value="auto">Auto</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -943,7 +943,7 @@ function SettingsView({
             </label>
             <label>
               Format
-              <select value={settings.openAiFormat} onChange={(event) => void updateSettings({ openAiFormat: event.target.value as PixelForgeSettings["openAiFormat"] })}>
+              <select value={settings.openAiFormat} onChange={(event) => void updateSettings({ openAiFormat: event.target.value as PixlForgeSettings["openAiFormat"] })}>
                 <option value="png">PNG</option>
                 <option value="jpeg">JPEG</option>
                 <option value="webp">WebP</option>
@@ -951,7 +951,7 @@ function SettingsView({
             </label>
             <label>
               Moderation
-              <select value={settings.openAiModeration} onChange={(event) => void updateSettings({ openAiModeration: event.target.value as PixelForgeSettings["openAiModeration"] })}>
+              <select value={settings.openAiModeration} onChange={(event) => void updateSettings({ openAiModeration: event.target.value as PixlForgeSettings["openAiModeration"] })}>
                 <option value="auto">Auto</option>
                 <option value="low">Low</option>
               </select>

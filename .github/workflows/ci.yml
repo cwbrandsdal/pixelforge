@@ -27,7 +27,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v5
         with:
-          name: pixelforge-windows
+          name: pixlforge-windows
           path: |
             dist/*.exe
             dist/*.yml
